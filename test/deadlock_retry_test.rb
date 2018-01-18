@@ -13,46 +13,46 @@ require 'logger'
 require_relative  "../lib/deadlock_retry"
 
 class MockModel
+  class Connection
+    class << self
+      attr_accessor :open_transactions
+    end
+    self.open_transactions = 0
 
-  @@open_transactions = 0
+    def self.adapter_name
+      "MySQL"
+    end
 
-  def self.transaction(*objects)
-    @@open_transactions += 1
-    yield
-  ensure
-    @@open_transactions -= 1
+    def self.show_innodb_status
+      "1607bf000 INNODB MONITOR OUTPUT"
+    end
+
+    def self.select_rows(sql)
+      [['version', '5.1.45']]
+    end
+
+    def self.select_one(sql)
+      {"Status" => ""}
+    end
   end
 
-  def self.open_transactions
-    @@open_transactions
+  def self.transaction(*objects)
+    connection.open_transactions += 1
+    yield
+  ensure
+    connection.open_transactions -= 1
   end
 
   def self.connection
-    self
+    Connection
   end
-
-  def self.show_innodb_status
-    "1607bf000 INNODB MONITOR OUTPUT"
-  end
-
-  def self.select_rows(sql)
-    [['version', '5.1.45']]
-  end
-
-  def self.select_one(sql)
-    true
-  end
-
-  def self.adapter_name
-    "MySQL"
-  end
-
-  include DeadlockRetry
 
   def self.rails_logger
     @logger ||= Logger.new(nil)
   end
 end
+
+MockModel.send(:prepend, DeadlockRetry)
 
 class DeadlockRetryTest < MiniTest::Test
 
@@ -96,10 +96,6 @@ class DeadlockRetryTest < MiniTest::Test
     assert_raises(ActiveRecord::StatementInvalid) do
       MockModel.transaction { raise ActiveRecord::StatementInvalid, "Something else" }
     end
-  end
-
-  def test_included_by_default
-    assert ActiveRecord::Base.respond_to?(:transaction_with_deadlock_handling)
   end
 
   def test_innodb_status_availability

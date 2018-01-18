@@ -1,12 +1,9 @@
 require 'active_support/core_ext/module/attribute_accessors'
 
 module DeadlockRetry
-  def self.included(base)
-    base.extend(ClassMethods)
-    base.class_eval do
-      class << self
-        alias_method_chain :transaction, :deadlock_handling
-      end
+  def self.prepended(base)
+    class << base
+      prepend ClassMethods
     end
   end
 
@@ -21,13 +18,13 @@ module DeadlockRetry
     MAX_RETRIES_ON_STATEMENT_INVALID = 5
 
 
-    def transaction_with_deadlock_handling(*objects, &block)
+    def transaction(*objects, &block)
       retry_count = 0
 
       check_innodb_status_available
 
       begin
-        transaction_without_deadlock_handling(*objects, &block)
+        super(*objects, &block)
       rescue ActiveRecord::StatementInvalid => error
         raise if in_nested_transaction?
         if STATEMENT_INVALID_ERROR_MESSAGES.any? { |msg| error.message =~ /#{Regexp.escape(msg)}/i }
@@ -96,10 +93,14 @@ module DeadlockRetry
     end
 
     def rails_logger
-      ::DEADLOCK_RETRY_LOGGER ||= Rails.logger
+      if defined?(Rails)
+        ::DEADLOCK_RETRY_LOGGER ||= Rails.logger
+      else
+        super
+      end
     end
 
   end
 end
 
-ActiveRecord::Base.send(:include, DeadlockRetry) if defined?(ActiveRecord)
+ActiveRecord::Base.send(:prepend, DeadlockRetry) if defined?(ActiveRecord)

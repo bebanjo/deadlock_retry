@@ -14,6 +14,9 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.homepage = %q{http://github.com/mperham/deadlock_retry}
   s.require_paths = ["lib"]
+
+  s.add_development_dependency 'rake'
   s.add_development_dependency 'mocha'
+  s.add_development_dependency 'minitest'
   s.add_development_dependency 'activerecord', ENV['ACTIVERECORD_VERSION'] || ' ~>3.0'
 end
