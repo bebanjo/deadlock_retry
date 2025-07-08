@@ -23,16 +23,16 @@ class MockModel
       "MySQL"
     end
 
-    def self.show_innodb_status
-      "1607bf000 INNODB MONITOR OUTPUT"
-    end
-
     def self.select_rows(sql)
       [['version', '5.1.45']]
     end
 
     def self.select_one(sql)
-      {"Status" => ""}
+      if sql == DeadlockRetry.innodb_status_cmd
+        { "Status" => "1607bf000 INNODB MONITOR OUTPUT" }
+      else
+        { "Status" => "" }
+      end
     end
   end
 
@@ -107,7 +107,7 @@ class DeadlockRetryTest < MiniTest::Test
   def test_failure_logging
     mock_logger = mock
     MockModel.expects(:rails_logger).returns(mock_logger)
-    mock_logger.expects(:warn).with("retry_tx_attempt=1 retry_tx_max_attempts=5 retry_tx_opentransactions=0 retry_tx_innodbstatusb64=MTYwN2JmMDAwIElOTk9EQiBNT05JVE9SIE9VVFBVVA==")
+    mock_logger.expects(:warn).with("retry_tx_attempt=1 retry_tx_max_attempts=5 retry_tx_opentransactions=0 retry_tx_innodbstatus=1607bf000 INNODB MONITOR OUTPUT")
     errors = [ TIMEOUT_ERROR ]
     assert_equal :success, MockModel.transaction { raise ActiveRecord::StatementInvalid, errors.shift unless errors.empty?; :success }
     assert errors.empty?
