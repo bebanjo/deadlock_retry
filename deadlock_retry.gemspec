@@ -15,8 +15,10 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/mperham/deadlock_retry}
   s.require_paths = ["lib"]
 
-  s.add_development_dependency 'rake'
-  s.add_development_dependency 'mocha'
+  s.add_development_dependency 'rake', '~> 13.0'
+  s.add_development_dependency 'mocha', '~> 2.7'
   s.add_development_dependency 'minitest'
-  s.add_development_dependency 'activerecord', ENV['ACTIVERECORD_VERSION'] || ' ~>3.0'
+  s.add_development_dependency 'activerecord', ENV['ACTIVERECORD_VERSION'] || '~> 6.1'
+  # Can't use concurrent ruby 1.3.5 until Rails 7.1, so we lock it here
+  s.add_development_dependency 'concurrent-ruby', '~> 1.3', '< 1.3.5'
 end

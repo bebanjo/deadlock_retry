@@ -1,14 +1,14 @@
 require 'rubygems'
 
 # Change the version if you want to test a different version of ActiveRecord
-gem 'activerecord', ENV['ACTIVERECORD_VERSION'] || ' ~>3.0'
+gem 'activerecord', ENV['ACTIVERECORD_VERSION'] || '~> 6.1'
 require 'active_record'
 require 'active_record/version'
 puts "Testing ActiveRecord #{ActiveRecord::VERSION::STRING}"
 
 require 'minitest'
 require 'minitest/autorun'
-require 'mocha/mini_test'
+require 'mocha/minitest'
 require 'logger'
 require_relative  "../lib/deadlock_retry"
 
