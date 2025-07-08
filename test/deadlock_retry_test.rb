@@ -36,7 +36,7 @@ class MockModel
     end
   end
 
-  def self.transaction(*objects)
+  def self.transaction(**_options, &_block)
     connection.open_transactions += 1
     yield
   ensure

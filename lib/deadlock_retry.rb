@@ -18,13 +18,13 @@ module DeadlockRetry
     MAX_RETRIES_ON_STATEMENT_INVALID = 5
 
 
-    def transaction(*objects, &block)
+    def transaction(**options, &block)
       retry_count = 0
 
       check_innodb_status_available
 
       begin
-        super(*objects, &block)
+        super
       rescue ActiveRecord::StatementInvalid => error
         raise if in_nested_transaction?
         if STATEMENT_INVALID_ERROR_MESSAGES.any? { |msg| error.message =~ /#{Regexp.escape(msg)}/i }
